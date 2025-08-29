@@ -10,7 +10,10 @@
 </head>
 
 <body>
-    <!-- Fundo musical -->
+    <!-- seta de voltar -->
+    <a onclick="history.back()" class="voltar-link" style="cursor: pointer;">
+        <i class="fas fa-arrow-left"></i>
+    </a>
     <div class="fundo-musical">
         <div class="nota-musical" style="--i:1"><i class="fas fa-music"></i></div>
         <div class="nota-musical" style="--i:2"><i class="fas fa-music"></i></div>
@@ -26,6 +29,8 @@
         <div id="usuarios-container"></div>
     </section>
 
+
+    
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
