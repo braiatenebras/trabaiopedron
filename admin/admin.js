@@ -54,6 +54,7 @@ if (window.location.pathname.includes('admin.html')) {
 
         snapshot.forEach(doc => {
             const data = doc.data();
+            const userId = doc.id; // <-- garante referência correta
             const card = document.createElement("div");
             card.classList.add("usuario-card");
 
@@ -75,17 +76,38 @@ if (window.location.pathname.includes('admin.html')) {
             // Botão tornar/remover admin
             card.querySelector(".admin-btn").addEventListener("click", async () => {
                 const novaRole = data.role === "admin" ? "user" : "admin";
-                await db.collection("users").doc(doc.id).update({ role: novaRole });
+                await db.collection("users").doc(userId).update({ role: novaRole });
                 carregarUsuarios();
             });
 
-            // Botão excluir usuário
             card.querySelector(".remover-btn").addEventListener("click", async () => {
                 if (confirm(`Excluir usuário ${data.email}?`)) {
-                    await db.collection("users").doc(doc.id).delete();
-                    carregarUsuarios();
+                    try {
+                        const currentUser = auth.currentUser;
+
+                        // Caso seja o próprio usuário logado
+                        if (currentUser && currentUser.uid === userId) {
+                            await db.collection("users").doc(userId).delete(); // remove do Firestore
+                            await currentUser.delete(); // remove do Auth
+                            alert("Sua conta foi excluída com sucesso!");
+                            window.location.href = "../index.html"; // redireciona
+                        } else {
+                            // Caso seja outro usuário
+                            // Somente remove do Firestore pelo front-end
+                            await db.collection("users").doc(userId).delete();
+                            alert(`Usuário ${data.email} removido do Firestore!`);
+                            // Se quiser realmente apagar do Auth, precisa Cloud Function/Admin SDK
+                        }
+
+                        carregarUsuarios();
+                    } catch (error) {
+                        console.error("Erro ao excluir usuário:", error);
+                        alert("Erro ao excluir usuário. Tente novamente.");
+                    }
                 }
             });
+
+
 
             usuariosContainer.appendChild(card);
         });
