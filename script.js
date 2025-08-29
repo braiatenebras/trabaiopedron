@@ -1,4 +1,3 @@
-// Este é o conteúdo completo do seu arquivo script.js
 
 // Elementos da interface
 const formMensagem = document.getElementById("form-mensagem");
@@ -9,17 +8,22 @@ const btnLogin = document.getElementById("btnLogin");
 const btnLogout = document.getElementById("btnLogout");
 const btnLoginPage = document.getElementById("btnLoginPage");
 
-// Verificar estado de autenticação
 auth.onAuthStateChanged((user) => {
     if (user) {
         // Usuário está logado
         console.log('Usuário autenticado:', user);
-        userInfo.textContent = user.displayName || user.email;
+
+        const userPhoto = user.photoURL ?
+            `<img src="${user.photoURL}" class="user-avatar" alt="Foto do perfil">` :
+            '<i class="fas fa-user user-icon"></i>';
+
+        userInfo.innerHTML = `${userPhoto} ${user.displayName || user.email}`;
+
         btnLogin.style.display = 'none';
         btnLogout.style.display = 'block';
         formMensagem.style.display = 'flex';
         loginRequired.style.display = 'none';
-        
+
         // Carregar mensagens
         carregarMensagens();
     } else {
@@ -34,7 +38,6 @@ auth.onAuthStateChanged((user) => {
     }
 });
 
-// Função para adicionar uma mensagem
 function adicionarMensagem(event) {
     event.preventDefault();
 
@@ -51,17 +54,18 @@ function adicionarMensagem(event) {
         uid: user.uid,
         nome: user.displayName || 'Usuário',
         email: user.email,
+        fotoURL: user.photoURL || '', // Salvar a URL da foto do perfil
         texto: texto,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     })
-    .then(() => {
-        document.getElementById("form-mensagem").reset();
-        console.log("Mensagem enviada com sucesso!");
-    })
-    .catch((error) => {
-        console.error("Erro ao enviar mensagem: ", error);
-        alert("Erro ao enviar mensagem. Tente novamente.");
-    });
+        .then(() => {
+            document.getElementById("form-mensagem").reset();
+            console.log("Mensagem enviada com sucesso!");
+        })
+        .catch((error) => {
+            console.error("Erro ao enviar mensagem: ", error);
+            alert("Erro ao enviar mensagem. Tente novamente.");
+        });
 }
 
 function renderizarMensagem(doc) {
@@ -77,17 +81,25 @@ function renderizarMensagem(doc) {
         'Agora mesmo';
 
     // Botão de excluir apenas para o autor da mensagem
-    const botaoExcluir = (user && user.uid === data.uid) ? 
+    const botaoExcluir = (user && user.uid === data.uid) ?
         `<button class="excluir-btn" onclick="excluirMensagem('${doc.id}')">
             <i class="fas fa-trash"></i>
         </button>` : '';
 
+    // Obter a URL da foto do perfil (se disponível)
+    const fotoPerfil = data.fotoURL || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+
     mensagemDiv.innerHTML = `
-        <h3>
-            ${data.nome}
-            ${botaoExcluir}
-        </h3>
-        <div class="email">${data.email}</div>
+        <div class="mensagem-cabecalho">
+            <img src="${fotoPerfil}" alt="Foto de perfil" class="foto-perfil" onerror="this.src='https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png'">
+            <div class="mensagem-info">
+                <h3>
+                    ${data.nome}
+                    ${botaoExcluir}
+                </h3>
+                <div class="email">${data.email}</div>
+            </div>
+        </div>
         <div class="texto">${data.texto}</div>
         <div class="data">${dataFormatada}</div>
     `;
