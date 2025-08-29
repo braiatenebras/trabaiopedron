@@ -148,7 +148,6 @@ body {
 .mensagem-info h3 {
     margin: 0 0 4px 0;
     display: flex;
-    justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 6px;
@@ -201,6 +200,8 @@ body {
     border-radius: 5px;
     cursor: pointer;
     font-size: 12px;
+    display: flex;
+
 }
 
 .excluir-btn:hover {
@@ -320,6 +321,36 @@ body {
 #form-mensagem button {
     align-self: flex-end;
 }
+
+.botao-admin {
+    background: #ff9800;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.3s ease;
+}
+
+.botao-admin:hover {
+    background: #e68900;
+    transform: rotate(20deg);
+}
+
+
+.tag-admin {
+    background-color: red;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
 
 /* RESPONSIVIDADE */
 @media (max-width: 1024px) {

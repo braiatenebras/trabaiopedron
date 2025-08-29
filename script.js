@@ -1,4 +1,3 @@
-
 // Elementos da interface
 const formMensagem = document.getElementById("form-mensagem");
 const mensagensContainer = document.getElementById("mensagens-container");
@@ -7,45 +6,72 @@ const userInfo = document.getElementById("userInfo");
 const btnLogin = document.getElementById("btnLogin");
 const btnLogout = document.getElementById("btnLogout");
 const btnLoginPage = document.getElementById("btnLoginPage");
+const userHeader = document.querySelector(".user-header");
 
-auth.onAuthStateChanged((user) => {
+// Atualiza header para admin
+async function atualizarHeaderAdmin(user) {
+    const userDoc = await db.collection("users").doc(user.uid).get();
+    const role = userDoc.data()?.role || "user";
+
+    const existingBtn = document.getElementById("btnAdminPanel");
+    if (existingBtn) existingBtn.remove();
+
+    if (role === "admin") {
+        const btnAdmin = document.createElement("button");
+        btnAdmin.id = "btnAdminPanel";
+        btnAdmin.innerHTML = '<i class="fas fa-cog"></i>';
+        btnAdmin.classList.add("botao-admin");
+        btnAdmin.title = "Painel Admin";
+
+        btnAdmin.addEventListener("click", () => {
+            window.location.href = "admin/admin.html";
+        });
+
+        userHeader.appendChild(btnAdmin);
+    }
+}
+
+// Checar login
+auth.onAuthStateChanged(async (user) => {
     if (user) {
-        // Usuário está logado
-        console.log('Usuário autenticado:', user);
+        const userRef = db.collection("users").doc(user.uid);
+        const doc = await userRef.get();
+        if (!doc.exists) {
+            await userRef.set({
+                name: user.displayName || "Usuário",
+                email: user.email,
+                role: "user",
+                photoURL: user.photoURL || ""
+            });
+        }
 
         const userPhoto = user.photoURL ?
             `<img src="${user.photoURL}" class="user-avatar" alt="Foto do perfil">` :
             '<i class="fas fa-user user-icon"></i>';
 
         userInfo.innerHTML = `${userPhoto} ${user.displayName || user.email}`;
-
         btnLogin.style.display = 'none';
         btnLogout.style.display = 'block';
         formMensagem.style.display = 'flex';
         loginRequired.style.display = 'none';
 
-        // Carregar mensagens
+        await atualizarHeaderAdmin(user);
         carregarMensagens();
     } else {
-        // Usuário não está logado
-        console.log('Usuário não autenticado');
-        userInfo.textContent = 'Visitante';
+        userInfo.textContent = "Visitante";
         btnLogin.style.display = 'block';
         btnLogout.style.display = 'none';
         formMensagem.style.display = 'none';
         loginRequired.style.display = 'block';
-        mensagensContainer.innerHTML = '';
+        mensagensContainer.innerHTML = "";
     }
 });
 
+// Adicionar mensagem
 function adicionarMensagem(event) {
     event.preventDefault();
-
     const user = auth.currentUser;
-    if (!user) {
-        alert('Você precisa estar logado para enviar mensagens!');
-        return;
-    }
+    if (!user) return alert('Você precisa estar logado para enviar mensagens!');
 
     const texto = document.getElementById("mensagem").value.trim();
     if (!texto) return;
@@ -54,13 +80,12 @@ function adicionarMensagem(event) {
         uid: user.uid,
         nome: user.displayName || 'Usuário',
         email: user.email,
-        fotoURL: user.photoURL || '', // Salvar a URL da foto do perfil
+        fotoURL: user.photoURL || '',
         texto: texto,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     })
         .then(() => {
-            document.getElementById("form-mensagem").reset();
-            console.log("Mensagem enviada com sucesso!");
+            formMensagem.reset();
         })
         .catch((error) => {
             console.error("Erro ao enviar mensagem: ", error);
@@ -68,44 +93,50 @@ function adicionarMensagem(event) {
         });
 }
 
-function renderizarMensagem(doc) {
+// Renderizar mensagem
+async function renderizarMensagem(doc) {
     const data = doc.data();
     const user = auth.currentUser;
+
+    // Verifica se usuário logado é admin
+    let isAdmin = false;
+    if (user) {
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        isAdmin = userDoc.data()?.role === "admin";
+    }
+
+    // Autor admin
+    const autorDoc = await db.collection("users").doc(data.uid).get();
+    const autorIsAdmin = autorDoc.data()?.role === "admin";
+
+    // Botão excluir
+    const botaoExcluir = (user && (user.uid === data.uid || isAdmin)) ?
+        `<button class="excluir-btn" onclick="excluirMensagem('${doc.id}')"><i class="fas fa-trash"></i></button>` : '';
+
+    const fotoPerfil = data.fotoURL || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+    const tagAdmin = autorIsAdmin ? '<span class="tag-admin">ADMIN</span>' : '';
+    const dataFormatada = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString('pt-BR') : 'Agora mesmo';
 
     const mensagemDiv = document.createElement("div");
     mensagemDiv.classList.add("mensagem");
     mensagemDiv.id = doc.id;
 
-    const dataFormatada = data.timestamp ?
-        new Date(data.timestamp.toDate()).toLocaleString('pt-BR') :
-        'Agora mesmo';
-
-    // Botão de excluir apenas para o autor da mensagem
-    const botaoExcluir = (user && user.uid === data.uid) ?
-        `<button class="excluir-btn" onclick="excluirMensagem('${doc.id}')">
-            <i class="fas fa-trash"></i>
-        </button>` : '';
-
-    // Obter a URL da foto do perfil (se disponível)
-    const fotoPerfil = data.fotoURL || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
-
     mensagemDiv.innerHTML = `
         <div class="mensagem-cabecalho">
-            <img src="${fotoPerfil}" alt="Foto de perfil" class="foto-perfil" onerror="this.src='https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png'">
+            <img src="${fotoPerfil}" alt="Foto de perfil" class="foto-perfil">
             <div class="mensagem-info">
-                <h3>
-                    ${data.nome}
-                    ${botaoExcluir}
-                </h3>
+                <h3>${data.nome} ${tagAdmin}</h3>
                 <div class="email">${data.email}</div>
             </div>
+            ${botaoExcluir}
         </div>
         <div class="texto">${data.texto}</div>
         <div class="data">${dataFormatada}</div>
     `;
 
-    mensagensContainer.prepend(mensagemDiv);
+    mensagensContainer.appendChild(mensagemDiv);
 }
+
 
 function excluirMensagem(id) {
     if (confirm("Tem certeza que deseja excluir esta mensagem?")) {
@@ -122,25 +153,9 @@ function excluirMensagem(id) {
 
 function carregarMensagens() {
     mensagensRef.orderBy("timestamp", "desc").onSnapshot((snapshot) => {
-        const changes = snapshot.docChanges();
-
-        if (changes.length === 0) {
-            mensagensContainer.innerHTML = "";
-            snapshot.forEach((doc) => {
-                renderizarMensagem(doc);
-            });
-            return;
-        }
-
-        changes.forEach((change) => {
-            if (change.type === "added") {
-                renderizarMensagem(change.doc);
-            } else if (change.type === "removed") {
-                const elemento = document.getElementById(change.doc.id);
-                if (elemento) {
-                    elemento.remove();
-                }
-            }
+        mensagensContainer.innerHTML = "";
+        snapshot.forEach((doc) => {
+            renderizarMensagem(doc);
         });
     }, (error) => {
         console.error("Erro ao carregar mensagens: ", error);
