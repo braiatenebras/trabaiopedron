@@ -29,7 +29,7 @@ document.getElementById('formLogin').addEventListener('submit', function (e) {
             const user = userCredential.user;
             console.log('Usuário logado:', user);
             alert('Login realizado com sucesso!');
-            window.location.href = '/Mural/mural.html';
+            window.location.href = '../index.html';
         })
         .catch((error) => {
             console.error('Erro no login:', error);
@@ -43,12 +43,11 @@ document.getElementById('btnGoogle').addEventListener('click', function () {
 
     auth.signInWithPopup(provider)
         .then((result) => {
-            // Login com Google bem-sucedido
+            // Login com Google bem-
             const user = result.user;
             console.log('Usuário logado com Google:', user);
             alert('Login com Google realizado com sucesso!');
-            // Redirecionar para a página principal
-            window.location.href = './index.html';
+            window.location.href = '../index.html';
         })
         .catch((error) => {
             console.error('Erro no login com Google:', error);
