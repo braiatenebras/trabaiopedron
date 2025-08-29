@@ -191,6 +191,8 @@ body {
     text-align: right;
 }
 
+
+
 /* Botão excluir */
 .excluir-btn {
     background: #ff4757;
@@ -318,10 +320,6 @@ body {
     font-family: inherit;
 }
 
-#form-mensagem button {
-    align-self: flex-end;
-}
-
 .botao-admin {
     background: #ff9800;
     border: none;
@@ -340,7 +338,6 @@ body {
     background: #e68900;
     transform: rotate(20deg);
 }
-
 
 .tag-admin {
     background-color: red;

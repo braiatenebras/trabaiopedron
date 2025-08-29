@@ -34,8 +34,14 @@
 
         <form id="form-mensagem" style="display: none;">
             <textarea id="mensagem" name="mensagem" placeholder="Sua mensagem..." required></textarea>
+            <input type="file" id="imagem" accept="image/*" onchange="previewImage(event)">
+            <div id="image-preview" style="display: none; margin: 10px 0;">
+                <img id="preview" style="max-width: 300px; max-height: 300px;">
+                <button type="button" onclick="removeImage()" style="margin-left: 10px;">Remover</button>
+            </div>
             <button type="submit">Enviar Mensagem</button>
         </form>
+
 
         <div id="login-required" class="mensagem-login">
             <p>Faça login para enviar e visualizar mensagens.</p>
@@ -65,6 +71,7 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+
 
         const mensagensRef = db.collection("mensagens");
     </script>

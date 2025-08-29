@@ -67,14 +67,27 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
-// Adicionar mensagem
-function adicionarMensagem(event) {
+async function adicionarMensagem(event) {
     event.preventDefault();
     const user = auth.currentUser;
     if (!user) return alert('Você precisa estar logado para enviar mensagens!');
 
     const texto = document.getElementById("mensagem").value.trim();
-    if (!texto) return;
+    const arquivo = document.getElementById("imagem").files[0];
+
+    if (!texto && !arquivo) {
+        return alert('Digite uma mensagem ou selecione uma imagem!');
+    }
+
+    let imagemBase64 = '';
+
+    if (arquivo) {
+        if (arquivo.size > 1048576) {
+            return alert('A imagem não pode ser maior que 1MB!');
+        }
+
+        imagemBase64 = await toBase64(arquivo);
+    }
 
     db.collection("mensagens").add({
         uid: user.uid,
@@ -82,13 +95,26 @@ function adicionarMensagem(event) {
         email: user.email,
         fotoURL: user.photoURL || '',
         texto: texto,
+        imagemBase64: imagemBase64,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => formMensagem.reset())
-        .catch(error => {
-            console.error("Erro ao enviar mensagem: ", error);
-            alert("Erro ao enviar mensagem. Tente novamente.");
-        });
+    }).then(() => {
+        formMensagem.reset();
+        document.getElementById('image-preview').style.display = 'none';
+    }).catch(error => {
+        console.error("Erro ao enviar mensagem: ", error);
+        alert("Erro ao enviar mensagem. Tente novamente.");
+    });
 }
+
+function toBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
 
 // Renderizar mensagem com tags
 async function renderizarMensagem(doc) {
@@ -121,6 +147,10 @@ async function renderizarMensagem(doc) {
     const dataFormatada = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString('pt-BR') : 'Agora mesmo';
     const tagAdmin = autorIsAdmin ? '<span class="tag-admin">ADMIN</span>' : '';
 
+    const imagemHTML = data.imagemBase64
+        ? `<div class="mensagem-imagem"><img src="${data.imagemBase64}" alt="Imagem da mensagem" style="max-width: 100%; max-height: 300px; border-radius: 8px; margin-top: 10px;"></div>`
+        : '';
+
     const mensagemDiv = document.createElement("div");
     mensagemDiv.classList.add("mensagem");
     mensagemDiv.id = doc.id;
@@ -135,6 +165,7 @@ async function renderizarMensagem(doc) {
             ${botaoExcluir}
         </div>
         <div class="texto">${data.texto}</div>
+        ${imagemHTML}
         <div class="data">${dataFormatada}</div>
     `;
 
@@ -174,3 +205,27 @@ btnLogout.addEventListener("click", () => auth.signOut()
         alert("Erro ao fazer logout. Tente novamente.");
     })
 );
+
+// Preview da imagem
+function previewImage(event) {
+    const input = event.target;
+    const preview = document.getElementById('preview');
+    const imagePreview = document.getElementById('image-preview');
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            preview.src = e.target.result;
+            imagePreview.style.display = 'block';
+        }
+
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Remover imagem selecionada
+function removeImage() {
+    document.getElementById('imagem').value = '';
+    document.getElementById('image-preview').style.display = 'none';
+}
