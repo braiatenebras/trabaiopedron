@@ -1,0 +1,182 @@
+/* RESET E GERAIS */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    color: white;
+    min-height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* FUNDO ANIMADO */
+.fundo-musical {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+.nota-musical {
+    position: absolute;
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.08);
+    animation: flutuarNota 15s linear infinite;
+    animation-delay: calc(var(--i) * -3s);
+}
+
+@keyframes flutuarNota {
+    0% {
+        transform: translateY(100vh) scale(0.5);
+        opacity: 0;
+    }
+
+    10%,
+    90% {
+        opacity: 0.3;
+    }
+
+    100% {
+        transform: translateY(-10vh) scale(1.2);
+        opacity: 0;
+    }
+}
+
+/* seção de contatos - CENTRALIZADA */
+.contatos {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    width: 100%;
+}
+
+.contatos h2 {
+    font-size: 40px;
+    margin-bottom: 20px;
+    color: #ffffff;
+}
+
+.contatos p {
+    font-size: 16px;
+    margin-bottom: 20px;
+    color: #c3b9ff;
+}
+
+.contatos form {
+    display: flex;
+    flex-direction: column;
+    max-width: 350px;
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+.contatos input,
+.contatos textarea {
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: #c3b9ff;
+}
+
+.contatos textarea {
+    resize: none;
+    min-height: 100px;
+}
+
+.contatos button {
+    background: #9c27b0;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.contatos button:hover {
+    background: #7b1fa2;
+    transform: translateY(-2px);
+}
+
+.mensagens-container {
+    max-width: 800px;
+    width: 100%;
+    margin-top: 30px;
+    padding: 20px;
+}
+
+.mensagem {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    text-align: left;
+    animation: fadeIn 0.5s ease;
+}
+
+.mensagem h3 {
+    color: #9c27b0;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.mensagem .email {
+    font-size: 12px;
+    color: #c3b9ff;
+    margin-bottom: 10px;
+}
+
+.mensagem .texto {
+    color: #ffffff;
+    line-height: 1.5;
+}
+
+.mensagem .data {
+    font-size: 12px;
+    color: #888;
+    text-align: right;
+    margin-top: 10px;
+}
+
+.mensagem .excluir-btn {
+    background: #ff4757;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* RESPONSIVIDADE */
+@media (max-width: 768px) {
+    .contatos form {
+        max-width: 90%;
+    }
+    
+    .mensagens-container {
+        max-width: 90%;
+    }
+}
