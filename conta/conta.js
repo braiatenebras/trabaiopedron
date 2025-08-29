@@ -48,7 +48,7 @@ document.getElementById('btnGoogle').addEventListener('click', function () {
             console.log('Usuário logado com Google:', user);
             alert('Login com Google realizado com sucesso!');
             // Redirecionar para a página principal
-            window.location.href = '/Mural/mural.html';
+            window.location.href = './index.html';
         })
         .catch((error) => {
             console.error('Erro no login com Google:', error);
@@ -62,8 +62,8 @@ auth.onAuthStateChanged((user) => {
         // Usuário está logado
         console.log('Usuário autenticado:', user);
         // Se já estiver logado, redirecionar para o mural
-        if (window.location.pathname !== '/Mural/mural.html') {
-            window.location.href = '/Mural/mural.html';
+        if (window.location.pathname !== './index.html') {
+            window.location.href = './index.html';
         }
     } else {
         // Usuário não está logado
