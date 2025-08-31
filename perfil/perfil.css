@@ -175,13 +175,13 @@ h1 {
 
 .conteudo-conta input {
     width: 100%;
+    color: white;
     padding: 0.8rem;
     border: 1px solid #ccc;
     border-radius: 4px;
     margin-bottom: 1rem;
     background: rgba(255, 255, 255, 0.1);
     font-size: 16px;
-    /* Melhora usabilidade em mobile */
 }
 
 .conteudo-conta label {
