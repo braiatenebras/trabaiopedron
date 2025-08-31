@@ -75,7 +75,7 @@ function fazerLogout() {
     auth.signOut()
         .then(() => {
             console.log('Usuário deslogado com sucesso');
-            window.location.href = '/Conta/conta.html';
+            window.location.href = '../../index.html';
         })
         .catch((error) => {
             console.error('Erro ao fazer logout:', error);

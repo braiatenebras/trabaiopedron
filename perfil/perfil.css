@@ -1,0 +1,350 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    color: black;
+    min-height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Seta de voltar */
+.voltar-link {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    color: white;
+    font-size: 24px;
+    z-index: 100;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.voltar-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(-3px);
+}
+
+h1 {
+    font-size: 2rem;
+    color: white;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.conta-container {
+    padding: 2rem 1rem;
+    /* Adicionado padding lateral */
+    min-height: 70vh;
+    width: 100%;
+}
+
+.conta-info {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    /* Permite quebra de linha */
+}
+
+.conta-header {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 30px 20px;
+    /* Padding reduzido para mobile */
+    color: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    width: 100%;
+    max-width: 350px;
+    /* Largura máxima */
+    min-width: 280px;
+    /* Largura mínima */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.conta-header .avatar {
+    font-size: 4rem;
+    /* Tamanho reduzido para mobile */
+    color: white;
+    margin-bottom: 1rem;
+    width: 100%;
+    height: auto;
+}
+
+.conta-header h2 {
+    margin: 0.5rem 0;
+    font-size: 1.2rem;
+    word-wrap: break-word;
+}
+
+.conta-header p {
+    color: #666;
+    font-size: 0.9rem;
+    word-wrap: break-word;
+}
+
+.conta-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 350px;
+    min-width: 280px;
+}
+
+.menu-opcao {
+    padding: 1rem;
+    background: #9c27b0;
+    border-radius: 8px;
+    color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.menu-opcao:hover {
+    background: #7b1fa2;
+}
+
+.menu-opcao.active {
+    background: #9c27b0;
+    color: white;
+}
+
+.menu-opcao i {
+    width: 20px;
+    /* Largura fixa para ícones */
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.logout-btn {
+    padding: 1rem;
+    background: rgba(214, 0, 0, 0.822);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    transition: all 0.3s ease;
+    width: 100%;
+    justify-content: center;
+}
+
+.logout-btn:hover {
+    background: #7b1fa2;
+}
+
+.conteudo-conta {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1.5rem;
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 30px;
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.conteudo-conta input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    font-size: 16px;
+    /* Melhora usabilidade em mobile */
+}
+
+.conteudo-conta label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.conta-secao {
+    display: none;
+}
+
+.conta-secao.active {
+    display: block;
+}
+
+/* Botões responsivos */
+.botao-salvar {
+    color: white;
+    border: none;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s;
+    margin-top: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    min-height: 50px;
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+}
+
+.botao-salvar {
+    background: #9c27b0;
+}
+
+.botao-salvar:hover {
+    background: #7b1fa2;
+}
+
+
+/* Responsividade melhorada */
+@media (max-width: 1200px) {
+    .conta-info {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 992px) {
+    .conteudo-conta {
+        padding: 1.5rem;
+    }
+
+    .botao-salvar,
+    .botao,
+    .botao-adicionar {
+        padding: 0.9rem 1.2rem;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .conta-info {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .conta-header,
+    .conta-menu {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .conta-header {
+        padding: 20px 15px;
+    }
+
+    .conta-header .avatar {
+        font-size: 3.5rem;
+    }
+
+    h1 {
+        font-size: 1.7rem;
+    }
+
+    .conteudo-conta {
+        padding: 1.2rem;
+        margin-top: 20px;
+    }
+
+    .menu-opcao,
+    .logout-btn {
+        padding: 0.9rem;
+    }
+
+    .botao-salvar,
+    .botao,
+    .botao-adicionar {
+        width: 100%;
+        max-width: none;
+        padding: 0.8rem 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .conta-container {
+        padding: 1rem 0.5rem;
+    }
+
+    .conta-header .avatar {
+        font-size: 3rem;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .conteudo-conta {
+        padding: 1rem;
+    }
+
+    .conteudo-conta input {
+        padding: 0.7rem;
+    }
+
+    .botao-salvar,
+    .botao,
+    .botao-adicionar {
+        padding: 0.8rem;
+        font-size: 0.9rem;
+        min-height: 45px;
+    }
+
+    .menu-opcao i {
+        font-size: 1rem;
+        width: 18px;
+    }
+}
+
+/* Melhoria para telas muito pequenas */
+@media (max-width: 360px) {
+    .conta-header {
+        padding: 15px 10px;
+    }
+
+    .conta-header .avatar {
+        font-size: 2.5rem;
+    }
+
+    .menu-opcao {
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .botao-salvar,
+    .botao,
+    .botao-adicionar {
+        padding: 0.7rem;
+        font-size: 0.85rem;
+    }
+}
