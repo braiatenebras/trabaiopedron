@@ -10,13 +10,10 @@
 </head>
 
 <body>
-
-
     <!-- seta de voltar -->
     <a onclick="history.back()" class="voltar-link" style="cursor: pointer;">
         <i class="fas fa-arrow-left"></i>
     </a>
-
 
     <!-- Conteúdo Principal - Área da Conta -->
     <main class="conta-container">
@@ -25,8 +22,15 @@
 
             <div class="conta-info">
                 <div class="conta-header">
-                    <div class="avatar">
-                        <i class="fas fa-user-circle"></i>
+                    <div class="avatar-container">
+                        <div class="avatar" id="avatar">
+                            <img id="foto-perfil" src="" alt="Foto de perfil">
+                            <i class="fas fa-user-circle default-avatar" id="default-avatar"></i>
+                        </div>
+                        <label for="foto-input" class="avatar-upload-btn">
+                            <i class="fas fa-camera"></i>
+                            <input type="file" id="foto-input" accept="image/*" style="display: none;">
+                        </label>
                     </div>
                     <h2 id="nome-usuario">Carregando...</h2>
                     <p id="email-usuario">Carregando...</p>
@@ -44,7 +48,6 @@
                     <button id="logout-btn" class="logout-btn">
                         <i class="fas fa-sign-out-alt"></i>
                         <span>Sair</span>
-
                     </button>
                 </div>
             </div>
@@ -89,7 +92,6 @@
         </div>
     </main>
 
-
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -108,7 +110,6 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
     </script>
-
 
     <script src="perfil.js"></script>
 </body>

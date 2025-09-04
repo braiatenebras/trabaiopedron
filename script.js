@@ -116,7 +116,6 @@ function toBase64(file) {
 }
 
 
-// Renderizar mensagem com tags
 async function renderizarMensagem(doc) {
     const data = doc.data();
     const autorDoc = await db.collection("users").doc(data.uid).get();

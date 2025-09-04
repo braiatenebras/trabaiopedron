@@ -38,6 +38,73 @@ body {
     transform: translateX(-3px);
 }
 
+/* Adicione estas regras ao seu arquivo perfil.css */
+
+.avatar-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    background-color: #f0f0f0;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+}
+
+.default-avatar {
+    font-size: 120px;
+    color: #ccc;
+    display: block;
+}
+
+.avatar-upload-btn {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: #6111b1;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid white;
+}
+
+.avatar-upload-btn:hover {
+    background: #9500ff;
+    transform: scale(1.1);
+}
+
+.loading {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #d85b08;
+}
+
+.loading.active {
+    display: block;
+}
+
 h1 {
     font-size: 2rem;
     color: white;
