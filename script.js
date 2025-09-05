@@ -98,7 +98,6 @@ async function adicionarMensagem(event) {
         imagemBase64: imagemBase64,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     }).then((docRef) => {
-        // Após adicionar a mensagem, renderiza ela sem recarregar tudo
         renderizarMensagem({
             id: docRef.id,
             data: {
