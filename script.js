@@ -67,6 +67,7 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
+// Adicionar mensagem
 async function adicionarMensagem(event) {
     event.preventDefault();
     const user = auth.currentUser;
@@ -85,7 +86,6 @@ async function adicionarMensagem(event) {
         if (arquivo.size > 1048576) {
             return alert('A imagem não pode ser maior que 1MB!');
         }
-
         imagemBase64 = await toBase64(arquivo);
     }
 
@@ -97,7 +97,21 @@ async function adicionarMensagem(event) {
         texto: texto,
         imagemBase64: imagemBase64,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
+    }).then((docRef) => {
+        // Após adicionar a mensagem, renderiza ela sem recarregar tudo
+        renderizarMensagem({
+            id: docRef.id,
+            data: {
+                uid: user.uid,
+                nome: user.displayName || 'Usuário',
+                email: user.email,
+                photoURL: user.photoURL || '',
+                texto: texto,
+                imagemBase64: imagemBase64,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            }
+        });
+
         formMensagem.reset();
         document.getElementById('image-preview').style.display = 'none';
     }).catch(error => {
@@ -106,6 +120,7 @@ async function adicionarMensagem(event) {
     });
 }
 
+// Função para converter arquivo para base64
 function toBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -115,14 +130,21 @@ function toBase64(file) {
     });
 }
 
+// Renderizar mensagem
+async function renderizarMensagem(change) {
+    const data = change.data;
 
-async function renderizarMensagem(doc) {
-    const data = doc.data();
-    const autorDoc = await db.collection("users").doc(data.uid).get();
-    const autorData = autorDoc.data() || {};
+    const fotoPerfil = data.photoURL ||
+        'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
 
-    // Usar a photoURL do Firestore (que contém nossa imagem em base64)
-    const fotoPerfil = autorData.photoURL || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+    // Buscar dados extras do usuário (role e tags)
+    let autorData = { role: "user", tags: [] };
+    try {
+        const autorDoc = await db.collection("users").doc(data.uid).get();
+        if (autorDoc.exists) autorData = autorDoc.data();
+    } catch (e) {
+        console.error("Erro ao buscar dados do autor:", e);
+    }
 
     const autorIsAdmin = autorData.role === "admin";
     const autorTags = autorData.tags || [];
@@ -141,19 +163,19 @@ async function renderizarMensagem(doc) {
     }
 
     const botaoExcluir = podeExcluir
-        ? `<button class="excluir-btn" onclick="excluirMensagem('${doc.id}')"><i class="fas fa-trash"></i></button>`
+        ? `<button class="excluir-btn" onclick="excluirMensagem('${change.id}')"><i class="fas fa-trash"></i></button>`
         : '';
 
     const dataFormatada = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString('pt-BR') : 'Agora mesmo';
     const tagAdmin = autorIsAdmin ? '<span class="tag-admin">ADMIN</span>' : '';
 
     const imagemHTML = data.imagemBase64
-        ? `<div class="mensagem-imagem"><img src="${data.imagemBase64}" alt="Imagem da mensagem" style="max-width: 100%; max-height: 300px; border-radius: 8px; margin-top: 10px;"></div>`
+        ? `<div class="mensagem-imagem"><img src="${data.imagemBase64}" alt="Imagem da mensagem"></div>`
         : '';
 
     const mensagemDiv = document.createElement("div");
     mensagemDiv.classList.add("mensagem");
-    mensagemDiv.id = doc.id;
+    mensagemDiv.id = change.id;
 
     mensagemDiv.innerHTML = `
         <div class="mensagem-cabecalho">
@@ -169,9 +191,10 @@ async function renderizarMensagem(doc) {
         <div class="data">${dataFormatada}</div>
     `;
 
-    mensagensContainer.appendChild(mensagemDiv);
+    mensagensContainer.insertBefore(mensagemDiv, mensagensContainer.firstChild); // Insere no topo
 }
 
+// Excluir mensagem
 function excluirMensagem(id) {
     if (confirm("Tem certeza que deseja excluir esta mensagem?")) {
         db.collection("mensagens").doc(id).delete()
@@ -182,21 +205,21 @@ function excluirMensagem(id) {
             });
     }
 }
-function carregarMensagens() {
-    const user = auth.currentUser;
-    if (!user) return;
 
-    // Remover o filtro de "uid" para mostrar mensagens de todos os usuários
+// Carregar todas as mensagens, mais recentes em cima
+function carregarMensagens() {
     db.collection("mensagens")
-        .orderBy("timestamp", "desc") // Ordenar por data de envio, em ordem decrescente
+        .orderBy("timestamp", "desc") // mais recentes primeiro
         .onSnapshot(snapshot => {
-            mensagensContainer.innerHTML = ""; // Limpa as mensagens anteriores
-            snapshot.forEach(doc => renderizarMensagem(doc));
+            snapshot.docChanges().forEach(change => {
+                if (change.type === "added") {
+                    renderizarMensagem(change); // Renderiza só as novas mensagens
+                }
+            });
         }, error => {
             console.error("Erro ao carregar mensagens: ", error);
         });
 }
-
 
 // Event Listeners
 formMensagem.addEventListener("submit", adicionarMensagem);
@@ -210,6 +233,7 @@ btnLogout.addEventListener("click", () => auth.signOut()
     })
 );
 
+// Preview da imagem
 function previewImage(event) {
     const input = event.target;
     const preview = document.getElementById('preview');
@@ -217,16 +241,13 @@ function previewImage(event) {
 
     if (input.files && input.files[0]) {
         const reader = new FileReader();
-
         reader.onload = function (e) {
             preview.src = e.target.result;
-            imagePreview.style.display = 'block'; // Exibe o preview
+            imagePreview.style.display = 'block';
         }
-
         reader.readAsDataURL(input.files[0]);
     }
 }
-
 
 // Remover imagem selecionada
 function removeImage() {
