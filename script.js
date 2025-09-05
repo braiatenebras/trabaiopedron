@@ -97,20 +97,7 @@ async function adicionarMensagem(event) {
         texto: texto,
         imagemBase64: imagemBase64,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    }).then((docRef) => {
-        renderizarMensagem({
-            id: docRef.id,
-            data: {
-                uid: user.uid,
-                nome: user.displayName || 'Usuário',
-                email: user.email,
-                photoURL: user.photoURL || '',
-                texto: texto,
-                imagemBase64: imagemBase64,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            }
-        });
-
+    }).then(() => {
         formMensagem.reset();
         document.getElementById('image-preview').style.display = 'none';
     }).catch(error => {
@@ -130,8 +117,15 @@ function toBase64(file) {
 }
 
 // Renderizar mensagem
-async function renderizarMensagem(change) {
-    const data = change.data;
+// Renderizar mensagem
+async function renderizarMensagem(doc) {
+    const data = doc.data();
+
+    // Verificar se a mensagem tem timestamp válido
+    if (!data.timestamp) {
+        console.warn("Mensagem sem timestamp:", doc.id);
+        return;
+    }
 
     const fotoPerfil = data.photoURL ||
         'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
@@ -162,7 +156,7 @@ async function renderizarMensagem(change) {
     }
 
     const botaoExcluir = podeExcluir
-        ? `<button class="excluir-btn" onclick="excluirMensagem('${change.id}')"><i class="fas fa-trash"></i></button>`
+        ? `<button class="excluir-btn" onclick="excluirMensagem('${doc.id}')"><i class="fas fa-trash"></i></button>`
         : '';
 
     const dataFormatada = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString('pt-BR') : 'Agora mesmo';
@@ -174,7 +168,8 @@ async function renderizarMensagem(change) {
 
     const mensagemDiv = document.createElement("div");
     mensagemDiv.classList.add("mensagem");
-    mensagemDiv.id = change.id;
+    mensagemDiv.id = doc.id;
+    mensagemDiv.setAttribute("data-timestamp", data.timestamp.toDate().getTime());
 
     mensagemDiv.innerHTML = `
         <div class="mensagem-cabecalho">
@@ -190,7 +185,24 @@ async function renderizarMensagem(change) {
         <div class="data">${dataFormatada}</div>
     `;
 
-    mensagensContainer.insertBefore(mensagemDiv, mensagensContainer.firstChild); // Insere no topo
+    // Adicionar a mensagem na posição correta baseada no timestamp
+    const mensagens = Array.from(mensagensContainer.children);
+    const novaMsgTimestamp = data.timestamp.toDate().getTime();
+    
+    let inserido = false;
+    for (let i = 0; i < mensagens.length; i++) {
+        const msgTimestamp = parseInt(mensagens[i].getAttribute("data-timestamp"));
+        if (novaMsgTimestamp > msgTimestamp) {
+            mensagensContainer.insertBefore(mensagemDiv, mensagens[i]);
+            inserido = true;
+            break;
+        }
+    }
+    
+    // Se não foi inserido antes, adiciona no final
+    if (!inserido) {
+        mensagensContainer.appendChild(mensagemDiv);
+    }
 }
 
 // Excluir mensagem
@@ -210,11 +222,8 @@ function carregarMensagens() {
     db.collection("mensagens")
         .orderBy("timestamp", "desc") // mais recentes primeiro
         .onSnapshot(snapshot => {
-            snapshot.docChanges().forEach(change => {
-                if (change.type === "added") {
-                    renderizarMensagem(change); // Renderiza só as novas mensagens
-                }
-            });
+            mensagensContainer.innerHTML = ""; // limpa antes de renderizar
+            snapshot.forEach(doc => renderizarMensagem(doc));
         }, error => {
             console.error("Erro ao carregar mensagens: ", error);
         });
@@ -253,3 +262,5 @@ function removeImage() {
     document.getElementById('imagem').value = '';
     document.getElementById('image-preview').style.display = 'none';
 }
+
+
