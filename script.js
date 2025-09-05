@@ -93,7 +93,7 @@ async function adicionarMensagem(event) {
         uid: user.uid,
         nome: user.displayName || 'Usuário',
         email: user.email,
-        fotoURL: user.photoURL || '',
+        photoURL: user.photoURL || '',
         texto: texto,
         imagemBase64: imagemBase64,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -121,6 +121,9 @@ async function renderizarMensagem(doc) {
     const autorDoc = await db.collection("users").doc(data.uid).get();
     const autorData = autorDoc.data() || {};
 
+    // Usar a photoURL do Firestore (que contém nossa imagem em base64)
+    const fotoPerfil = autorData.photoURL || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+
     const autorIsAdmin = autorData.role === "admin";
     const autorTags = autorData.tags || [];
 
@@ -128,8 +131,6 @@ async function renderizarMensagem(doc) {
         .filter(tag => tag && tag.nome)
         .map(tag => `<span class="tag-admin" style="background-color:${tag.color || '#ff9800'}">${tag.nome.toUpperCase()}</span>`)
         .join(" ");
-
-    const fotoPerfil = data.fotoURL || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
 
     const currentUser = auth.currentUser;
     let podeExcluir = false;
