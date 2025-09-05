@@ -41,15 +41,17 @@ auth.onAuthStateChanged(async (user) => {
                 email: user.email,
                 role: "user",
                 photoURL: user.photoURL || "",
-                tags: []
             });
         }
 
-        const userPhoto = user.photoURL
-            ? `<img src="${user.photoURL}" class="user-avatar" alt="Foto do perfil">`
-            : '<i class="fas fa-user user-icon"></i>';
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        const userData = userDoc.data();
 
-        userInfo.innerHTML = `${userPhoto} ${user.displayName || user.email}`;
+        const foto = userData?.photoURL || user.photoURL || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+        const nome = userData?.name || user.displayName || user.email;
+
+        userInfo.innerHTML = `<img src="${foto}" class="user-avatar" alt="Foto de perfil"> ${nome}`;
+
         btnLogin.style.display = 'none';
         btnLogout.style.display = 'block';
         formMensagem.style.display = 'flex';
@@ -67,7 +69,6 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
-// Adicionar mensagem
 async function adicionarMensagem(event) {
     event.preventDefault();
     const user = auth.currentUser;
@@ -89,11 +90,17 @@ async function adicionarMensagem(event) {
         imagemBase64 = await toBase64(arquivo);
     }
 
+    const userDoc = await db.collection("users").doc(user.uid).get();
+    const userData = userDoc.data() || {};
+
+    const fotoPerfil = userData.photoURL || user.photoURL || '';
+    const nome = userData.name || user.displayName || 'Usuário';
+
     db.collection("mensagens").add({
         uid: user.uid,
-        nome: user.displayName || 'Usuário',
+        nome: nome,
         email: user.email,
-        photoURL: user.photoURL || '',
+        photoURL: fotoPerfil,
         texto: texto,
         imagemBase64: imagemBase64,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -106,6 +113,7 @@ async function adicionarMensagem(event) {
     });
 }
 
+
 // Função para converter arquivo para base64
 function toBase64(file) {
     return new Promise((resolve, reject) => {
@@ -116,7 +124,6 @@ function toBase64(file) {
     });
 }
 
-// Renderizar mensagem
 // Renderizar mensagem
 async function renderizarMensagem(doc) {
     const data = doc.data();
@@ -130,8 +137,8 @@ async function renderizarMensagem(doc) {
     const fotoPerfil = data.photoURL ||
         'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
 
-    // Buscar dados extras do usuário (role e tags)
-    let autorData = { role: "user", tags: [] };
+    // Buscar dados extras do usuário (role)
+    let autorData = { role: "user" };
     try {
         const autorDoc = await db.collection("users").doc(data.uid).get();
         if (autorDoc.exists) autorData = autorDoc.data();
@@ -140,12 +147,6 @@ async function renderizarMensagem(doc) {
     }
 
     const autorIsAdmin = autorData.role === "admin";
-    const autorTags = autorData.tags || [];
-
-    const tagsHTML = autorTags
-        .filter(tag => tag && tag.nome)
-        .map(tag => `<span class="tag-admin" style="background-color:${tag.color || '#ff9800'}">${tag.nome.toUpperCase()}</span>`)
-        .join(" ");
 
     const currentUser = auth.currentUser;
     let podeExcluir = false;
@@ -175,7 +176,7 @@ async function renderizarMensagem(doc) {
         <div class="mensagem-cabecalho">
             <img src="${fotoPerfil}" alt="Foto de perfil" class="foto-perfil">
             <div class="mensagem-info">
-                <h3>${data.nome} ${tagAdmin} ${tagsHTML}</h3>
+                <h3>${data.nome} ${tagAdmin} </h3>
                 <div class="email">${data.email}</div>
             </div>
             ${botaoExcluir}
@@ -185,10 +186,9 @@ async function renderizarMensagem(doc) {
         <div class="data">${dataFormatada}</div>
     `;
 
-    // Adicionar a mensagem na posição correta baseada no timestamp
     const mensagens = Array.from(mensagensContainer.children);
     const novaMsgTimestamp = data.timestamp.toDate().getTime();
-    
+
     let inserido = false;
     for (let i = 0; i < mensagens.length; i++) {
         const msgTimestamp = parseInt(mensagens[i].getAttribute("data-timestamp"));
@@ -198,7 +198,7 @@ async function renderizarMensagem(doc) {
             break;
         }
     }
-    
+
     // Se não foi inserido antes, adiciona no final
     if (!inserido) {
         mensagensContainer.appendChild(mensagemDiv);
@@ -207,27 +207,36 @@ async function renderizarMensagem(doc) {
 
 // Excluir mensagem
 function excluirMensagem(id) {
-    if (confirm("Tem certeza que deseja excluir esta mensagem?")) {
-        db.collection("mensagens").doc(id).delete()
-            .then(() => console.log("Mensagem excluída com sucesso!"))
-            .catch(error => {
-                console.error("Erro ao excluir mensagem: ", error);
-                alert("Erro ao excluir mensagem. Tente novamente.");
-            });
-    }
+    db.collection("mensagens").doc(id).delete()
+        .then(() => console.log("Mensagem excluída com sucesso!"))
+        .catch(error => {
+            console.error("Erro ao excluir mensagem: ", error);
+            alert("Erro ao excluir mensagem. Tente novamente.");
+        });
+
 }
 
-// Carregar todas as mensagens, mais recentes em cima
 function carregarMensagens() {
     db.collection("mensagens")
-        .orderBy("timestamp", "desc") // mais recentes primeiro
+        .orderBy("timestamp", "desc")
         .onSnapshot(snapshot => {
-            mensagensContainer.innerHTML = ""; // limpa antes de renderizar
-            snapshot.forEach(doc => renderizarMensagem(doc));
+            snapshot.docChanges().forEach(change => {
+                if (change.type === "added") {
+                    renderizarMensagem(change.doc); // adiciona nova mensagem
+                } else if (change.type === "removed") {
+                    const msgDiv = document.getElementById(change.doc.id);
+                    if (msgDiv) msgDiv.remove(); // remove apenas a mensagem excluída
+                } else if (change.type === "modified") {
+                    // Se quiser lidar com edição de mensagem futuramente
+                    const msgDiv = document.getElementById(change.doc.id);
+                    if (msgDiv) renderizarMensagem(change.doc); 
+                }
+            });
         }, error => {
             console.error("Erro ao carregar mensagens: ", error);
         });
 }
+
 
 // Event Listeners
 formMensagem.addEventListener("submit", adicionarMensagem);

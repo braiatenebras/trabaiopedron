@@ -14,6 +14,10 @@ body {
     flex-direction: column;
 }
 
+.mensagem-imagem img {
+    max-width: 100%;
+}
+
 /* FUNDO ANIMADO */
 .fundo-musical {
     position: fixed;
@@ -205,7 +209,6 @@ body {
     text-align: right;
 }
 
-/* Esconde o input de arquivo original */
 #imagem {
     display: none;
 }
@@ -229,7 +232,6 @@ body {
 #image-preview button:hover {
     background-color: #cc0000;
 }
-
 
 /* Botão excluir */
 .excluir-btn {
