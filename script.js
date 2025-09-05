@@ -172,7 +172,6 @@ async function renderizarMensagem(doc) {
     mensagensContainer.appendChild(mensagemDiv);
 }
 
-// Excluir mensagem
 function excluirMensagem(id) {
     if (confirm("Tem certeza que deseja excluir esta mensagem?")) {
         db.collection("mensagens").doc(id).delete()
@@ -183,16 +182,21 @@ function excluirMensagem(id) {
             });
     }
 }
-
-// Carregar mensagens
 function carregarMensagens() {
-    db.collection("mensagens").orderBy("timestamp", "desc").onSnapshot(snapshot => {
-        mensagensContainer.innerHTML = "";
-        snapshot.forEach(doc => renderizarMensagem(doc));
-    }, error => {
-        console.error("Erro ao carregar mensagens: ", error);
-    });
+    const user = auth.currentUser;
+    if (!user) return;
+
+    // Remover o filtro de "uid" para mostrar mensagens de todos os usuários
+    db.collection("mensagens")
+        .orderBy("timestamp", "desc") // Ordenar por data de envio, em ordem decrescente
+        .onSnapshot(snapshot => {
+            mensagensContainer.innerHTML = ""; // Limpa as mensagens anteriores
+            snapshot.forEach(doc => renderizarMensagem(doc));
+        }, error => {
+            console.error("Erro ao carregar mensagens: ", error);
+        });
 }
+
 
 // Event Listeners
 formMensagem.addEventListener("submit", adicionarMensagem);
@@ -206,7 +210,6 @@ btnLogout.addEventListener("click", () => auth.signOut()
     })
 );
 
-// Preview da imagem
 function previewImage(event) {
     const input = event.target;
     const preview = document.getElementById('preview');
@@ -217,12 +220,13 @@ function previewImage(event) {
 
         reader.onload = function (e) {
             preview.src = e.target.result;
-            imagePreview.style.display = 'block';
+            imagePreview.style.display = 'block'; // Exibe o preview
         }
 
         reader.readAsDataURL(input.files[0]);
     }
 }
+
 
 // Remover imagem selecionada
 function removeImage() {
