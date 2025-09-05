@@ -1,4 +1,3 @@
-// perfil.js - Código completo e funcional
 document.addEventListener('DOMContentLoaded', function() {
     // Elementos da interface
     const fotoInput = document.getElementById('foto-input');
@@ -96,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Função para converter arquivo em base64 (igual à do mural)
+    // Função para converter arquivo em base64
     function toBase64(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -105,23 +104,6 @@ document.addEventListener('DOMContentLoaded', function() {
             reader.onerror = error => reject(error);
         });
     }
-
-    // Alternar entre seções
-    menuOpcoes.forEach(opcao => {
-        opcao.addEventListener('click', function() {
-            const section = this.getAttribute('data-section');
-            
-            // Remover classe active de todas as opções
-            menuOpcoes.forEach(op => op.classList.remove('active'));
-            // Adicionar classe active à opção clicada
-            this.classList.add('active');
-            
-            // Esconder todas as seções
-            secoes.forEach(sec => sec.classList.remove('active'));
-            // Mostrar apenas a seção correspondente
-            document.getElementById(`${section}-secao`).classList.add('active');
-        });
-    });
 
     // Atualizar dados do usuário
     formDados.addEventListener('submit', async function(e) {

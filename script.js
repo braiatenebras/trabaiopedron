@@ -263,4 +263,3 @@ function removeImage() {
     document.getElementById('image-preview').style.display = 'none';
 }
 
-
