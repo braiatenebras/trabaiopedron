@@ -54,7 +54,7 @@ if (window.location.pathname.includes('admin.html')) {
 
         snapshot.forEach(doc => {
             const data = doc.data();
-            const userId = doc.id; // <-- garante referência correta
+            const userId = doc.id;
             const card = document.createElement("div");
             card.classList.add("usuario-card");
 
@@ -80,23 +80,24 @@ if (window.location.pathname.includes('admin.html')) {
                 carregarUsuarios();
             });
 
+            // Botão excluir usuário
             card.querySelector(".remover-btn").addEventListener("click", async () => {
-                if (confirm(`Excluir usuário ${data.email}?`)) {
+                if (confirm(`Tem certeza que deseja excluir permanentemente o usuário ${data.email}? Todas as mensagens deste usuário também serão removidas.`)) {
                     try {
-                        const currentUser = auth.currentUser;
+                        // Primeiro, excluir todas as mensagens do usuário
+                        await excluirMensagensDoUsuario(userId);
 
-                        // Caso seja o próprio usuário logado
+                        // Depois, remover o usuário do Firestore
+                        await db.collection("users").doc(userId).delete();
+
+                        // Se for o próprio usuário logado, também remover da autenticação
+                        const currentUser = auth.currentUser;
                         if (currentUser && currentUser.uid === userId) {
-                            await db.collection("users").doc(userId).delete(); // remove do Firestore
-                            await currentUser.delete(); // remove do Auth
+                            await currentUser.delete();
                             alert("Sua conta foi excluída com sucesso!");
-                            window.location.href = "../index.html"; // redireciona
+                            window.location.href = "../index.html";
                         } else {
-                            // Caso seja outro usuário
-                            // Somente remove do Firestore pelo front-end
-                            await db.collection("users").doc(userId).delete();
-                            alert(`Usuário ${data.email} removido do Firestore!`);
-                            // Se quiser realmente apagar do Auth, precisa Cloud Function/Admin SDK
+                            alert(`Usuário ${data.email} excluído com sucesso!`);
                         }
 
                         carregarUsuarios();
@@ -107,9 +108,30 @@ if (window.location.pathname.includes('admin.html')) {
                 }
             });
 
-
-
             usuariosContainer.appendChild(card);
         });
+    }
+
+    // Função para excluir todas as mensagens de um usuário
+    async function excluirMensagensDoUsuario(userId) {
+        try {
+            // Buscar todas as mensagens do usuário
+            const mensagensSnapshot = await db.collection("mensagens")
+                .where("uid", "==", userId)
+                .get();
+
+            // Excluir cada mensagem
+            const batch = db.batch();
+            mensagensSnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+
+            // Executar a exclusão em lote
+            await batch.commit();
+            console.log(`Todas as mensagens do usuário ${userId} foram excluídas.`);
+        } catch (error) {
+            console.error("Erro ao excluir mensagens do usuário:", error);
+            throw error;
+        }
     }
 }
