@@ -1,83 +1,100 @@
-// Configuração do Firebase
-const auth = firebase.auth();
+// Configuração do Supabase (substitua com suas credenciais)
+const SUPABASE_URL = 'https://ryvfiwsnmdqsmzmusnxg.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5dmZpd3NubWRxc216bXVzbnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1OTIyODcsImV4cCI6MjA3MzE2ODI4N30.vbrq6R632vPRmcMsbPiFD6DwhIw-WP5jRPArbv4Qzgo';
 
-// Alternar visibilidade da senha
-document.getElementById('alternarSenha').addEventListener('click', function () {
-    const senhaInput = document.getElementById('senha');
-    const tipo = senhaInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    senhaInput.setAttribute('type', tipo);
+ // Inicializar o cliente Supabase
+ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Alterar ícone
-    this.classList.toggle('fa-eye');
-    this.classList.toggle('fa-eye-slash');
-});
+ // Alternar visibilidade da senha
+ document.getElementById('alternarSenha').addEventListener('click', function () {
+     const senhaInput = document.getElementById('senha');
+     const tipo = senhaInput.getAttribute('type') === 'password' ? 'text' : 'password';
+     senhaInput.setAttribute('type', tipo);
+     this.classList.toggle('fa-eye');
+     this.classList.toggle('fa-eye-slash');
+ });
 
-// Login com email e senha
-document.getElementById('formLogin').addEventListener('submit', function (e) {
-    e.preventDefault();
+ document.getElementById('alternarConfirmarSenha').addEventListener('click', function () {
+     const senhaInput = document.getElementById('confirmarSenha');
+     const tipo = senhaInput.getAttribute('type') === 'password' ? 'text' : 'password';
+     senhaInput.setAttribute('type', tipo);
+     this.classList.toggle('fa-eye');
+     this.classList.toggle('fa-eye-slash');
+ });
 
-    const email = document.getElementById('email').value.trim();
-    const senha = document.getElementById('senha').value;
+ // Criar conta com email e senha
+ document.getElementById('formCriarConta').addEventListener('submit', async function (e) {
+     e.preventDefault();
 
-    if (!email) {
-        alert('Por favor, digite seu endereço de e-mail.');
-        return;
-    }
+     const nome = document.getElementById('nome').value.trim();
+     const email = document.getElementById('email').value.trim();
+     const senha = document.getElementById('senha').value;
+     const confirmarSenha = document.getElementById('confirmarSenha').value;
 
-    auth.signInWithEmailAndPassword(email, senha)
-        .then((userCredential) => {
-            const user = userCredential.user;
-            console.log('Usuário logado:', user);
-            alert('Login realizado com sucesso!');
-            window.location.href = '../index.html';
-        })
-        .catch((error) => {
-            console.error('Erro no login:', error);
-            alert('Erro no login: ' + error.message);
-        });
-});
+     // Validações
+     if (!nome) {
+         alert('Por favor, digite seu nome completo.');
+         return;
+     }
 
-// Login com Google
-document.getElementById('btnGoogle').addEventListener('click', function () {
-    const provider = new firebase.auth.GoogleAuthProvider();
+     if (!email) {
+         alert('Por favor, digite seu endereço de e-mail.');
+         return;
+     }
 
-    auth.signInWithPopup(provider)
-        .then((result) => {
-            // Login com Google bem-
-            const user = result.user;
-            console.log('Usuário logado com Google:', user);
-            alert('Login com Google realizado com sucesso!');
-            window.location.href = '../index.html';
-        })
-        .catch((error) => {
-            console.error('Erro no login com Google:', error);
-            alert('Erro no login com Google: ' + error.message);
-        });
-});
+     if (senha !== confirmarSenha) {
+         alert('As senhas não coincidem.');
+         return;
+     }
 
-// Verificar estado de autenticação
-auth.onAuthStateChanged((user) => {
-    if (user) {
-        // Usuário está logado
-        console.log('Usuário autenticado:', user);
-        // Se já estiver logado, redirecionar para o mural
-        if (window.location.pathname !== './index.html') {
-            window.location.href = './index.html';
-        }
-    } else {
-        // Usuário não está logado
-        console.log('Usuário não autenticado');
-    }
-});
+     if (senha.length < 6) {
+         alert('A senha deve ter pelo menos 6 caracteres.');
+         return;
+     }
 
-// Função para fazer logout (pode ser usada em outras páginas)
-function fazerLogout() {
-    auth.signOut()
-        .then(() => {
-            console.log('Usuário deslogado com sucesso');
-            window.location.href = '../../index.html';
-        })
-        .catch((error) => {
-            console.error('Erro ao fazer logout:', error);
-        });
-}
+     try {
+         // Criar usuário no Supabase Auth
+         const { data, error } = await supabase.auth.signUp({
+             email: email,
+             password: senha,
+             options: {
+                 data: {
+                     full_name: nome
+                 }
+             }
+         });
+
+         if (error) {
+             console.error('Erro ao criar conta:', error);
+             alert('Erro ao criar conta: ' + error.message);
+             return;
+         }
+
+         console.log('Conta criada:', data.user);
+         alert('Conta criada com sucesso! Verifique seu e-mail para confirmar sua conta.');
+         window.location.href = '../conta/conta.html';
+     } catch (error) {
+         console.error('Erro ao criar conta:', error);
+         alert('Erro ao criar conta: ' + error.message);
+     }
+ });
+
+ // Login com Google
+ document.getElementById('btnGoogle').addEventListener('click', async function () {
+     try {
+         const { data, error } = await supabase.auth.signInWithOAuth({
+             provider: 'google',
+             options: {
+                 redirectTo: window.location.origin + '/index.html'
+             }
+         });
+
+         if (error) {
+             console.error('Erro no login com Google:', error);
+             alert('Erro no login com Google: ' + error.message);
+         }
+     } catch (error) {
+         console.error('Erro no login com Google:', error);
+         alert('Erro no login com Google: ' + error.message);
+     }
+ });

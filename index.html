@@ -54,29 +54,8 @@
         </div>
     </section>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAP_vlP5nyEaKrhJpGYbUmWkM74DNtDqdE",
-            authDomain: "trabalhopedro-fb2e2.firebaseapp.com",
-            projectId: "trabalhopedro-fb2e2",
-            storageBucket: "trabalhopedro-fb2e2.firebasestorage.app",
-            messagingSenderId: "869516994571",
-            appId: "1:869516994571:web:041efff8635ee3ed417f0e"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-
-        const mensagensRef = db.collection("mensagens");
-    </script>
-
-
+    <!-- Substitui Firebase pelo Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
 </body>
 
