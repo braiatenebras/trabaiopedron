@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
         e.target.value = formatted;
     });
 
-    formCriarConta.addEventListener('submit', async function (e) {
+    formCriarConta.addEventListener('submit', function (e) {
         e.preventDefault();
 
         const nome = formCriarConta.querySelector('input[placeholder="Nome"]').value.trim();
@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const confirmarSenha = document.getElementById('confirmarSenha').value;
         const telefone = inputTelefone.value.trim();
 
-        // Validações
         if (!nome || !email || !senha || !confirmarSenha || !telefone) {
             mostrarMensagem('Preencha todos os campos.', 'erro');
             return;
@@ -36,48 +35,36 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const phoneDigits = telefone.replace(/\D/g, '');
         if (phoneDigits.length < 10 || phoneDigits.length > 11) {
-            mostrarMensagem('Telefone inválido. Insira o DDD corretamente.', 'erro');
+            mostrarMensagem('Telefone inválido. insira o ddd.', 'erro');
             return;
         }
 
-        // Exibe a tela de loading
         telaLoading.classList.add('ativo');
 
-        try {
-            // Criação do usuário no Supabase
-            const { data, error } = await supabase.auth.signUp({
-                email: email,
-                password: senha
+        firebase.auth().createUserWithEmailAndPassword(email, senha)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                return user.updateProfile({ displayName: nome });
+            })
+            .then(() => {
+                mostrarMensagem('Conta criada com sucesso!', 'sucesso', true);
+            })
+            .catch((error) => {
+                telaLoading.classList.remove('ativo');
+                let mensagem = 'Erro ao criar conta.';
+
+                if (error.code === 'auth/email-already-in-use') {
+                    mensagem = 'E-mail já está em uso.';
+                } else if (error.code === 'auth/invalid-email') {
+                    mensagem = 'E-mail inválido.';
+                } else if (error.code === 'auth/weak-password') {
+                    mensagem = 'A senha deve ter pelo menos 6 caracteres.';
+                }
+
+                mostrarMensagem(mensagem, 'erro');
             });
-
-            if (error) {
-                throw error;
-            }
-
-            // Atualiza o nome de usuário no Supabase
-            await supabase.auth.updateUser({ data: { nome: nome } });
-
-            // Caso tenha sucesso, mostra a mensagem
-            mostrarMensagem('Conta criada com sucesso!', 'sucesso', true);
-
-        } catch (error) {
-            telaLoading.classList.remove('ativo');
-            let mensagem = 'Erro ao criar conta.';
-
-            // Mensagens de erro específicas do Supabase
-            if (error.message === 'Email already exists') {
-                mensagem = 'E-mail já está em uso.';
-            } else if (error.message === 'Invalid email') {
-                mensagem = 'E-mail inválido.';
-            } else if (error.message === 'Password too short') {
-                mensagem = 'A senha deve ter pelo menos 6 caracteres.';
-            }
-
-            mostrarMensagem(mensagem, 'erro');
-        }
     });
 
-    // Função para mostrar a mensagem de sucesso ou erro
     function mostrarMensagem(texto, tipo, redirecionar = false) {
         const icone = tipo === 'erro' ? 'fa-exclamation-circle' : 'fa-check-circle';
         const div = document.createElement('div');
@@ -97,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
             setTimeout(() => {
                 if (document.body.contains(div)) document.body.removeChild(div);
                 if (tipo === 'sucesso' && redirecionar) {
-                    window.location.href = '../index.html'; // Redireciona para a página principal
+                    window.location.href = '../index.html';
                 }
             }, 500);
         }, 3000);

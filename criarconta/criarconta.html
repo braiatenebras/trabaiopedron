@@ -69,13 +69,23 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script>
-        const SUPABASE_URL = 'https://ryvfiwsnmdqsmzmusnxg.supabase.co'; // sua URL
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5dmZpd3NubWRxc216bXVzbnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1OTIyODcsImV4cCI6MjA3MzE2ODI4N30.vbrq6R632vPRmcMsbPiFD6DwhIw-WP5jRPArbv4Qzgo'; // sua chave anon
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const firebaseConfig = {
+            apiKey: "AIzaSyAP_vlP5nyEaKrhJpGYbUmWkM74DNtDqdE",
+            authDomain: "trabalhopedro-fb2e2.firebaseapp.com",
+            projectId: "trabalhopedro-fb2e2",
+            storageBucket: "trabalhopedro-fb2e2.firebasestorage.app",
+            messagingSenderId: "869516994571",
+            appId: "1:869516994571:web:041efff8635ee3ed417f0e"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const mensagensRef = db.collection("mensagens");
     </script>
-    
 
     <script src="criarconta.js"></script>
 </body>

@@ -1,10 +1,3 @@
-// Configuração do Supabase (substitua com suas credenciais)
-const SUPABASE_URL = 'https://ryvfiwsnmdqsmzmusnxg.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5dmZpd3NubWRxc216bXVzbnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1OTIyODcsImV4cCI6MjA3MzE2ODI4N30.vbrq6R632vPRmcMsbPiFD6DwhIw-WP5jRPArbv4Qzgo';
-
-// Inicializar o cliente Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 // Elementos da interface
 const formMensagem = document.getElementById("form-mensagem");
 const mensagensContainer = document.getElementById("mensagens-container");
@@ -17,13 +10,8 @@ const userHeader = document.querySelector(".user-header");
 
 // Atualiza header para admin
 async function atualizarHeaderAdmin(user) {
-    const { data, error } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-    const role = data?.role || "user";
+    const userDoc = await db.collection("users").doc(user.uid).get();
+    const role = userDoc.data()?.role || "user";
 
     const existingBtn = document.getElementById("btnAdminPanel");
     if (existingBtn) existingBtn.remove();
@@ -42,47 +30,25 @@ async function atualizarHeaderAdmin(user) {
 }
 
 // Checar login
-supabase.auth.onAuthStateChange(async (event, session) => {
-    const user = session?.user;
-
+auth.onAuthStateChanged(async (user) => {
     if (user) {
-        // Verificar se o usuário já existe na tabela users
-        const { data: userData, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', user.id)
-            .single();
+        const userRef = db.collection("users").doc(user.uid);
+        const doc = await userRef.get();
 
-        if (error || !userData) {
-            // Criar usuário se não existir
-            const { error: insertError } = await supabase
-                .from('users')
-                .insert([{
-                    id: user.id,
-                    name: user.user_metadata.full_name || "Usuário",
-                    email: user.email,
-                    role: "user",
-                    photoURL: user.user_metadata.avatar_url || "",
-                }]);
-
-            if (insertError) {
-                console.error("Erro ao criar usuário:", insertError);
-            }
+        if (!doc.exists) {
+            await userRef.set({
+                name: user.displayName || "Usuário",
+                email: user.email,
+                role: "user",
+                photoURL: user.photoURL || "",
+            });
         }
 
-        // Buscar dados do usuário
-        const { data: userProfile, error: profileError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', user.id)
-            .single();
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        const userData = userDoc.data();
 
-        if (profileError) {
-            console.error("Erro ao buscar perfil:", profileError);
-        }
-
-        const foto = userProfile?.photoURL || user.user_metadata.avatar_url || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
-        const nome = userProfile?.name || user.user_metadata.full_name || user.email;
+        const foto = userData?.photoURL || user.photoURL || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+        const nome = userData?.name || user.displayName || user.email;
 
         userInfo.innerHTML = `<img src="${foto}" class="user-avatar" alt="Foto de perfil"> ${nome}`;
 
@@ -105,8 +71,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
 
 async function adicionarMensagem(event) {
     event.preventDefault();
-    const { data: { user } } = await supabase.auth.getUser();
-
+    const user = auth.currentUser;
     if (!user) return alert('Você precisa estar logado para enviar mensagens!');
 
     const texto = document.getElementById("mensagem").value.trim();
@@ -125,42 +90,29 @@ async function adicionarMensagem(event) {
         imagemBase64 = await toBase64(arquivo);
     }
 
-    // Buscar dados do usuário
-    const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+    const userDoc = await db.collection("users").doc(user.uid).get();
+    const userData = userDoc.data() || {};
 
-    if (userError) {
-        console.error("Erro ao buscar dados do usuário:", userError);
-    }
+    const fotoPerfil = userData.photoURL || user.photoURL || '';
+    const nome = userData.name || user.displayName || 'Usuário';
 
-    const fotoPerfil = userData?.photoURL || user.user_metadata.avatar_url || '';
-    const nome = userData?.name || user.user_metadata.full_name || 'Usuário';
-
-    // Inserir mensagem no Supabase
-    const { data, error } = await supabase
-        .from('mensagens')
-        .insert([{
-            uid: user.id,
-            nome: nome,
-            email: user.email,
-            photoURL: fotoPerfil,
-            texto: texto,
-            imagemBase64: imagemBase64,
-            timestamp: new Date().toISOString()
-        }])
-        .select();
-
-    if (error) {
-        console.error("Erro ao enviar mensagem: ", error);
-        alert("Erro ao enviar mensagem. Tente novamente.");
-    } else {
+    db.collection("mensagens").add({
+        uid: user.uid,
+        nome: nome,
+        email: user.email,
+        photoURL: fotoPerfil,
+        texto: texto,
+        imagemBase64: imagemBase64,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
         formMensagem.reset();
         document.getElementById('image-preview').style.display = 'none';
-    }
+    }).catch(error => {
+        console.error("Erro ao enviar mensagem: ", error);
+        alert("Erro ao enviar mensagem. Tente novamente.");
+    });
 }
+
 
 // Função para converter arquivo para base64
 function toBase64(file) {
@@ -173,12 +125,12 @@ function toBase64(file) {
 }
 
 // Renderizar mensagem
-async function renderizarMensagem(mensagem) {
-    const data = mensagem;
+async function renderizarMensagem(doc) {
+    const data = doc.data();
 
     // Verificar se a mensagem tem timestamp válido
     if (!data.timestamp) {
-        console.warn("Mensagem sem timestamp:", data.id);
+        console.warn("Mensagem sem timestamp:", doc.id);
         return;
     }
 
@@ -188,38 +140,27 @@ async function renderizarMensagem(mensagem) {
     // Buscar dados extras do usuário (role)
     let autorData = { role: "user" };
     try {
-        const { data: autor, error } = await supabase
-            .from('users')
-            .select('role')
-            .eq('id', data.uid)
-            .single();
-
-        if (autor) autorData = autor;
+        const autorDoc = await db.collection("users").doc(data.uid).get();
+        if (autorDoc.exists) autorData = autorDoc.data();
     } catch (e) {
         console.error("Erro ao buscar dados do autor:", e);
     }
 
     const autorIsAdmin = autorData.role === "admin";
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const currentUser = auth.currentUser;
     let podeExcluir = false;
-
-    if (user) {
-        const { data: currentUserData, error } = await supabase
-            .from('users')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-
-        const currentRole = currentUserData?.role || "user";
-        podeExcluir = (user.id === data.uid || currentRole === "admin");
+    if (currentUser) {
+        const currentUserDoc = await db.collection("users").doc(currentUser.uid).get();
+        const currentRole = currentUserDoc.data()?.role || "user";
+        podeExcluir = (currentUser.uid === data.uid || currentRole === "admin");
     }
 
     const botaoExcluir = podeExcluir
-        ? `<button class="excluir-btn" onclick="excluirMensagem('${data.id}')"><i class="fas fa-trash"></i></button>`
+        ? `<button class="excluir-btn" onclick="excluirMensagem('${doc.id}')"><i class="fas fa-trash"></i></button>`
         : '';
 
-    const dataFormatada = data.timestamp ? new Date(data.timestamp).toLocaleString('pt-BR') : 'Agora mesmo';
+    const dataFormatada = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString('pt-BR') : 'Agora mesmo';
     const tagAdmin = autorIsAdmin ? '<span class="tag-admin">ADMIN</span>' : '';
 
     const imagemHTML = data.imagemBase64
@@ -228,25 +169,25 @@ async function renderizarMensagem(mensagem) {
 
     const mensagemDiv = document.createElement("div");
     mensagemDiv.classList.add("mensagem");
-    mensagemDiv.id = data.id;
-    mensagemDiv.setAttribute("data-timestamp", new Date(data.timestamp).getTime());
+    mensagemDiv.id = doc.id;
+    mensagemDiv.setAttribute("data-timestamp", data.timestamp.toDate().getTime());
 
     mensagemDiv.innerHTML = `
-           <div class="mensagem-cabecalho">
-               <img src="${fotoPerfil}" alt="Foto de perfil" class="foto-perfil">
-               <div class="mensagem-info">
-                   <h3>${data.nome} ${tagAdmin} </h3>
-                   <div class="email">${data.email}</div>
-               </div>
-               ${botaoExcluir}
-           </div>
-           <div class="texto">${data.texto}</div>
-           ${imagemHTML}
-           <div class="data">${dataFormatada}</div>
-       `;
+        <div class="mensagem-cabecalho">
+            <img src="${fotoPerfil}" alt="Foto de perfil" class="foto-perfil">
+            <div class="mensagem-info">
+                <h3>${data.nome} ${tagAdmin} </h3>
+                <div class="email">${data.email}</div>
+            </div>
+            ${botaoExcluir}
+        </div>
+        <div class="texto">${data.texto}</div>
+        ${imagemHTML}
+        <div class="data">${dataFormatada}</div>
+    `;
 
     const mensagens = Array.from(mensagensContainer.children);
-    const novaMsgTimestamp = new Date(data.timestamp).getTime();
+    const novaMsgTimestamp = data.timestamp.toDate().getTime();
 
     let inserido = false;
     for (let i = 0; i < mensagens.length; i++) {
@@ -265,72 +206,49 @@ async function renderizarMensagem(mensagem) {
 }
 
 // Excluir mensagem
-async function excluirMensagem(id) {
-    const { error } = await supabase
-        .from('mensagens')
-        .delete()
-        .eq('id', id);
+function excluirMensagem(id) {
+    db.collection("mensagens").doc(id).delete()
+        .then(() => console.log("Mensagem excluída com sucesso!"))
+        .catch(error => {
+            console.error("Erro ao excluir mensagem: ", error);
+            alert("Erro ao excluir mensagem. Tente novamente.");
+        });
 
-    if (error) {
-        console.error("Erro ao excluir mensagem: ", error);
-        alert("Erro ao excluir mensagem. Tente novamente.");
-    } else {
-        console.log("Mensagem excluída com sucesso!");
-    }
 }
 
 function carregarMensagens() {
-    // Configurar subscription para receber atualizações em tempo real
-    const subscription = supabase
-        .channel('mensagens-changes')
-        .on('postgres_changes',
-            {
-                event: '*',
-                schema: 'public',
-                table: 'mensagens'
-            },
-            async (payload) => {
-                if (payload.eventType === 'INSERT') {
-                    renderizarMensagem(payload.new);
-                } else if (payload.eventType === 'DELETE') {
-                    const msgDiv = document.getElementById(payload.old.id);
-                    if (msgDiv) msgDiv.remove();
+    db.collection("mensagens")
+        .orderBy("timestamp", "desc")
+        .onSnapshot(snapshot => {
+            snapshot.docChanges().forEach(change => {
+                if (change.type === "added") {
+                    renderizarMensagem(change.doc); // adiciona nova mensagem
+                } else if (change.type === "removed") {
+                    const msgDiv = document.getElementById(change.doc.id);
+                    if (msgDiv) msgDiv.remove(); // remove apenas a mensagem excluída
+                } else if (change.type === "modified") {
+                    // Se quiser lidar com edição de mensagem futuramente
+                    const msgDiv = document.getElementById(change.doc.id);
+                    if (msgDiv) renderizarMensagem(change.doc); 
                 }
-            }
-        )
-        .subscribe();
-
-    // Carregar mensagens existentes
-    supabase
-        .from('mensagens')
-        .select('*')
-        .order('timestamp', { ascending: false })
-        .then(({ data, error }) => {
-            if (error) {
-                console.error("Erro ao carregar mensagens: ", error);
-                return;
-            }
-
-            mensagensContainer.innerHTML = "";
-            data.forEach(mensagem => {
-                renderizarMensagem(mensagem);
             });
+        }, error => {
+            console.error("Erro ao carregar mensagens: ", error);
         });
 }
+
 
 // Event Listeners
 formMensagem.addEventListener("submit", adicionarMensagem);
 btnLogin.addEventListener("click", () => window.location.href = "conta/conta.html");
 btnLoginPage.addEventListener("click", () => window.location.href = "conta/conta.html");
-btnLogout.addEventListener("click", async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+btnLogout.addEventListener("click", () => auth.signOut()
+    .then(() => console.log("Usuário deslogado com sucesso"))
+    .catch(error => {
         console.error("Erro ao fazer logout:", error);
         alert("Erro ao fazer logout. Tente novamente.");
-    } else {
-        console.log("Usuário deslogado com sucesso");
-    }
-});
+    })
+);
 
 // Preview da imagem
 function previewImage(event) {
@@ -353,3 +271,4 @@ function removeImage() {
     document.getElementById('imagem').value = '';
     document.getElementById('image-preview').style.display = 'none';
 }
+
